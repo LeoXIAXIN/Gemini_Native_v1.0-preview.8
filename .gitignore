@@ -1,0 +1,50 @@
+# Public source repository: deployment runtimes and models are distributed separately.
+/runtime-gmr/
+/runtime-hgpt/
+/storage/assets/
+/storage/ckpts/
+
+# Customer authorization and signing material must never be committed.
+*.license
+*.lic
+*.pem
+*.key
+*.pfx
+*.p12
+**/private_key*
+**/*private-key*
+**/*issuer-secret*
+.env
+.env.*
+!.env.example
+/resources/license/*
+!/resources/license/README.txt
+/gemini_native_manifest.json
+
+# Per-machine settings, acceptance reports, logs and temporary authorization.
+/config/gemini_native_config.json
+/storage/auth/
+/storage/logs/
+/storage/reports/
+/storage/verification/*
+!/storage/verification/unitree_official_sdk.json
+/tracker_log.txt
+**/__pycache__/
+*.py[cod]
+*.log
+.pytest_cache/
+
+# Archives, installers, binaries and obsolete development outputs.
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.exe
+*.dll
+*.bundle
+/build/
+/dist/
+/release/
+/tmp/
+/output/
+/node_modules/

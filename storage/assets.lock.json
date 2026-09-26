@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repository": "https://github.com/GalaxyGeneralRobotics/Humanoid-GPT.git",
+    "commit": "9f9e7b74ecadb532abbb34b6a779d87191a9bbb6"
+  },
+  "g1_versions": {
+    "4010": {
+      "asset_directory": "unitree_g1_4010",
+      "file_count": 70,
+      "bytes": 41474488,
+      "g1_mjx_track_sha256": "E30A6078C3F6BE0335C2A928FFE20C215016FCCD080102B355629335FC2C3B29"
+    },
+    "5010": {
+      "asset_directory": "unitree_g1_5010",
+      "file_count": 72,
+      "bytes": 41212952,
+      "g1_mjx_track_sha256": "38B954404D571ED4FEB62B8940BEEF2EA3BFFAE1767FD96C8B2ACF7B9BA5EA40"
+    }
+  }
+}

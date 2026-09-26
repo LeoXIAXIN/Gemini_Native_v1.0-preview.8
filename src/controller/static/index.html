@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f7fb" />
+    <meta
+      name="description"
+      content="Chingmu Gemini Native v1.0 Preview Windows 仿真动作控制台"
+    />
+    <title>Chingmu Gemini Native · v1.0 Preview</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <header class="app-header">
+      <div class="brand" aria-label="Chingmu Gemini Native v1.0 Preview">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <div>
+          <p class="brand-kicker">WINDOWS NATIVE MOTION SYSTEM</p>
+          <p class="brand-name">Chingmu Gemini Native <span class="release-badge">v1.0 Preview</span></p>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <span class="safety-banner">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3 3.7 6.7v5.6c0 4.7 3.5 7.8 8.3 9.1 4.8-1.3 8.3-4.4 8.3-9.1V6.7L12 3Z" />
+            <path d="M8.7 12.2 11 14.5l4.6-5" />
+          </svg>
+          Windows 原生运行<span aria-hidden="true">｜</span>仿真与受控真机接口
+        </span>
+      </div>
+
+      <div class="header-status-stack">
+        <div
+          class="service-state"
+          id="productLicenseState"
+          data-tone="neutral"
+          title="联网授权只用于决定能否开始新任务，不会替代真机安全授权"
+        >
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="productLicenseStateText">授权：正在验证</span>
+        </div>
+        <div class="service-state" id="serviceState" data-tone="neutral">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="serviceStateText">正在连接控制服务</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="offline-strip" id="offlineStrip" role="alert" hidden>
+      <span>控制服务暂时不可用，正在自动重连。当前流程状态可能尚未更新。</span>
+      <button class="text-button" id="retryConnectionButton" type="button">立即重试</button>
+    </div>
+
+    <main id="main-content" class="main-content">
+      <section class="run-overview surface" aria-labelledby="pipelineTitle">
+        <div class="overview-status">
+          <span class="large-status-indicator" id="largeStatusIndicator" data-tone="neutral" aria-hidden="true">
+            <span></span>
+          </span>
+          <div>
+            <div class="eyebrow-row">
+              <span class="eyebrow">系统状态</span>
+              <span class="state-code" id="stateCode">IDLE</span>
+            </div>
+            <h1 id="pipelineTitle">控制流程尚未启动</h1>
+            <p id="pipelineMessage">确认动捕参数后，可先运行环境检查。</p>
+          </div>
+        </div>
+        <div class="overview-meta">
+          <span class="meta-chip" id="activeModeChip">实时生成式遥操作</span>
+          <span class="meta-chip output-mode-chip" id="executionModeChip">仅仿真</span>
+          <span class="meta-chip">
+            本次运行 <strong id="runDuration">00:00:00</strong>
+          </span>
+          <span class="last-update" id="lastUpdate">尚未获取状态</span>
+        </div>
+      </section>
+
+      <div class="dashboard-layout">
+        <aside class="settings-panel surface" aria-labelledby="settingsTitle">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">运行设置</p>
+              <h2 id="settingsTitle">选择工作路径</h2>
+            </div>
+            <span class="unsaved-badge" id="unsavedBadge" hidden>未保存</span>
+          </div>
+
+          <form id="configForm" novalidate>
+            <fieldset class="mode-fieldset">
+              <legend class="sr-only">工作路径</legend>
+
+              <label class="mode-option">
+                <input type="radio" name="mode" value="humanoid_gpt" checked />
+                <span class="mode-card">
+                  <span class="mode-symbol mode-symbol-hg" aria-hidden="true">B</span>
+                  <span class="mode-copy">
+                    <span class="mode-heading-row"><strong>实时生成式遥操作</strong></span>
+                  </span>
+                  <span class="radio-indicator" aria-hidden="true"></span>
+                </span>
+              </label>
+
+              <label class="mode-option">
+                <input type="radio" name="mode" value="gmr_preview" />
+                <span class="mode-card">
+                  <span class="mode-symbol mode-symbol-gmr" aria-hidden="true">P</span>
+                  <span class="mode-copy">
+                    <span class="mode-heading-row"><strong>仅 GMR 预览</strong></span>
+                  </span>
+                  <span class="radio-indicator" aria-hidden="true"></span>
+                </span>
+              </label>
+            </fieldset>
+
+            <div class="form-divider"></div>
+
+            <section class="execution-mode-section" aria-labelledby="executionModeTitle">
+              <div class="subsection-heading">
+                <div>
+                  <h3 id="executionModeTitle">选择输出方式</h3>
+                  <p class="sr-only">选择 Windows 仿真、只读真机检查或受控真机输出。</p>
+                </div>
+                <span class="safety-lock-chip" hidden>真机直通 · 实验性</span>
+              </div>
+
+              <fieldset class="execution-mode-fieldset">
+                <legend class="sr-only">仿真与真机输出方式</legend>
+
+                <label class="execution-option">
+                  <input type="radio" name="execution_mode" value="simulation_only" checked />
+                  <span class="execution-card">
+                    <span class="execution-card-header"><strong>仅仿真</strong></span>
+                  </span>
+                </label>
+
+                <label class="execution-option">
+                  <input type="radio" name="execution_mode" value="real_only" />
+                  <span class="execution-card">
+                    <span class="execution-card-header"><strong>仅真机</strong></span>
+                  </span>
+                </label>
+
+                <label class="execution-option">
+                  <input type="radio" name="execution_mode" value="parallel" />
+                  <span class="execution-card">
+                    <span class="execution-card-header"><strong>仿真+真机</strong></span>
+                  </span>
+                </label>
+
+                <input type="radio" name="execution_mode" value="shadow" hidden />
+              </fieldset>
+
+              <div class="execution-mode-notice" id="executionModeNotice" data-tone="safe" hidden>
+                <strong id="executionModeNoticeTitle">当前：仅仿真</strong>
+                <span id="executionModeNoticeText">不会加载 Unitree 真机接口，也不会发送任何电机指令。</span>
+              </div>
+            </section>
+
+              <section class="unitree-interface-settings" id="unitreeInterfaceSettings" data-active="false" aria-labelledby="unitreeInterfaceTitle" hidden aria-hidden="true">
+                <div class="unitree-interface-heading">
+                  <div>
+                    <h4 id="unitreeInterfaceTitle">Unitree 真机接口</h4>
+                    <p>仅“仅真机 / 仿真 + 真机”模式使用；填写与 G1 有线连接的 Windows 网卡 IPv4 地址。</p>
+                  </div>
+                  <span>实验性</span>
+                </div>
+
+                <div class="field-grid unitree-interface-grid">
+                  <div class="field">
+                    <label for="unitreeNetworkInterface">Windows 网卡 IPv4</label>
+                    <input
+                      id="unitreeNetworkInterface"
+                      name="unitree_network_interface"
+                      type="text"
+                      value="192.168.123.100"
+                      maxlength="64"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-describedby="unitreeNetworkInterfaceHint unitreeNetworkInterfaceError"
+                    />
+                    <span class="field-hint" id="unitreeNetworkInterfaceHint">例如 192.168.123.100；这是电脑有线网卡地址，不是机器人地址</span>
+                    <span class="field-error" id="unitreeNetworkInterfaceError"></span>
+                  </div>
+
+                  <div class="field">
+                    <label for="unitreeRobotIp">G1 连通性检查 IP</label>
+                    <input
+                      id="unitreeRobotIp"
+                      name="unitree_robot_ip"
+                      type="text"
+                      value="192.168.123.164"
+                      inputmode="decimal"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-describedby="unitreeRobotIpHint unitreeRobotIpError"
+                    />
+                    <span class="field-hint" id="unitreeRobotIpHint">仅用于可选 ping 提示，不参与 DDS 目标选择；以 60 秒 LowState 验收为准</span>
+                    <span class="field-error" id="unitreeRobotIpError"></span>
+                  </div>
+                </div>
+
+                <section class="debug-settings compact-real-mode" aria-labelledby="debugSettingsTitle">
+                  <div class="debug-settings-heading">
+                    <div>
+                      <h4 id="debugSettingsTitle">真机只读</h4>
+                      <p class="sr-only" id="debugModeHint"></p>
+                    </div>
+                    <label class="setting-toggle" for="debugMode">
+                      <input id="debugMode" name="debug_mode" type="checkbox" />
+                      <span class="toggle-track" aria-hidden="true"><span></span></span>
+                      <span class="toggle-label">开启</span>
+                    </label>
+                  </div>
+                </section>
+
+                <div class="real-direct-warning" role="note">
+                  <strong>真机安全提醒：</strong>
+                  <span>真机输出为实验功能。启动前必须确认安全架受力、实体遥控器与物理急停可用；网页“停止控制”不是急停。</span>
+                </div>
+              </section>
+
+            <div class="form-divider"></div>
+
+            <div class="field-grid">
+              <div class="field field-wide">
+                <label for="serverIp">动捕服务器 IP</label>
+                <div class="input-with-prefix">
+                  <span aria-hidden="true">HOST</span>
+                  <input
+                    id="serverIp"
+                    name="server_ip"
+                    type="text"
+                    value="192.168.2.100"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-describedby="serverIpHint serverIpError"
+                  />
+                </div>
+                <span class="field-hint" id="serverIpHint">填写动捕服务主机地址</span>
+                <span class="field-error" id="serverIpError"></span>
+              </div>
+
+              <div class="field">
+                <label for="skeletonId">Skeleton ID</label>
+                <input
+                  id="skeletonId"
+                  name="skeleton_id"
+                  type="number"
+                  value="0"
+                  min="0"
+                  max="255"
+                  step="1"
+                  inputmode="numeric"
+                  aria-describedby="skeletonIdHint skeletonIdError"
+                />
+                <span class="field-hint" id="skeletonIdHint">默认使用 0</span>
+                <span class="field-error" id="skeletonIdError"></span>
+              </div>
+
+              <div class="field">
+                <label for="humanHeight">人体身高</label>
+                <div class="input-with-suffix">
+                  <input
+                    id="humanHeight"
+                    name="human_height"
+                    type="number"
+                    value="1.75"
+                    min="1.2"
+                    max="2.2"
+                    step="0.01"
+                    inputmode="decimal"
+                    aria-describedby="humanHeightHint humanHeightError"
+                  />
+                  <span aria-hidden="true">m</span>
+                </div>
+                <span class="field-hint" id="humanHeightHint">建议填写实际身高</span>
+                <span class="field-error" id="humanHeightError"></span>
+              </div>
+
+              <div class="field field-wide">
+                <label for="publishFps">目标频率</label>
+                <div class="input-with-suffix">
+                  <input
+                    id="publishFps"
+                    name="publish_fps"
+                    type="number"
+                    value="50"
+                    min="20"
+                    max="60"
+                    step="1"
+                    inputmode="numeric"
+                    aria-describedby="publishFpsError"
+                  />
+                  <span aria-hidden="true">Hz</span>
+                </div>
+                <span id="publishFpsHint" hidden aria-hidden="true"></span>
+                <span class="field-error" id="publishFpsError"></span>
+              </div>
+            </div>
+
+            <details class="advanced-settings" id="advancedSettings">
+              <summary>
+                <span>高级设置</span>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>
+              </summary>
+              <div class="advanced-content">
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="transitionSeconds">平滑过渡</label>
+                    <div class="input-with-suffix">
+                      <input
+                        id="transitionSeconds"
+                        name="transition_seconds"
+                        type="number"
+                        value="1.5"
+                        min="0.5"
+                        max="5"
+                        step="0.1"
+                        inputmode="decimal"
+                        aria-describedby="transitionSecondsError"
+                      />
+                      <span aria-hidden="true">秒</span>
+                    </div>
+                    <span class="field-error" id="transitionSecondsError"></span>
+                  </div>
+
+                  <div class="field">
+                    <label for="device">计算设备</label>
+                    <select id="device" name="device">
+                      <option value="auto">自动选择</option>
+                      <option value="cpu">CPU</option>
+                      <option value="cuda">CUDA</option>
+                    </select>
+                    <span class="sr-only" id="deviceHint" hidden aria-hidden="true"></span>
+                  </div>
+
+                </div>
+
+              </div>
+            </details>
+
+            <section class="operator-safety-settings" aria-label="内部安全配置" hidden aria-hidden="true">
+              <div class="safety-strategy-setting startup-handover-setting" id="startupHandoverSetting" data-eligible="true" data-mode="enabled">
+                  <div class="safety-strategy-copy">
+                    <strong>遥控器所有权交接</strong>
+                    <span id="startupHandoverHint">真机流程会保持生成式策略热运行，但 LowCmd 仅在机身 debug、官方 owner 退出并通过站姿门后创建。官方遥控器负责蹲→起和运控站立；遥控器 A 键接入动捕，B 键返回策略站立，SELECT 关闭 LowCmd。</span>
+                  </div>
+                  <label class="setting-toggle" for="startupHandoverEnabled">
+                    <input
+                      id="startupHandoverEnabled"
+                      name="startup_handover_enabled"
+                      type="checkbox"
+                      checked
+                      aria-describedby="startupHandoverHint"
+                    />
+                    <span class="toggle-track" aria-hidden="true"><span></span></span>
+                    <span class="toggle-label" id="startupHandoverToggleLabel">启用（默认）</span>
+                  </label>
+                </div>
+
+              <div class="safety-strategy-setting" id="safetyStrategySetting" data-eligible="false" data-mode="off">
+                <div class="safety-strategy-copy">
+                  <strong>实验性二级安全策略</strong>
+                  <span id="safetyStrategyHint">默认关闭；当前仅支持实时生成式遥操作的仿真分支。</span>
+                </div>
+                <label class="setting-toggle" for="safetyStrategyEnabled">
+                  <input
+                    id="safetyStrategyEnabled"
+                    name="safety_strategy_enabled"
+                    type="checkbox"
+                    aria-describedby="safetyStrategyHint safetyStrategyEnabledError"
+                  />
+                  <span class="toggle-track" aria-hidden="true"><span></span></span>
+                  <span class="toggle-label" id="safetyStrategyToggleLabel">关闭（默认）</span>
+                </label>
+                <span class="field-error safety-strategy-error" id="safetyStrategyEnabledError"></span>
+              </div>
+            </section>
+
+            <div class="config-actions">
+              <button class="button button-secondary" id="resetConfigButton" type="button">
+                恢复默认
+              </button>
+              <button class="button button-primary-soft" id="saveConfigButton" type="submit">
+                保存设置
+              </button>
+            </div>
+          </form>
+        </aside>
+
+        <section class="monitoring-column" aria-label="实时运行状态">
+          <section class="alert-panel" id="alertPanel" role="alert" data-tone="danger" hidden>
+            <div class="alert-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 8v5m0 3.5v.1M10.4 4.8 2.8 18a1.5 1.5 0 0 0 1.3 2.2h15.8a1.5 1.5 0 0 0 1.3-2.2L13.6 4.8a1.8 1.8 0 0 0-3.2 0Z" /></svg>
+            </div>
+            <div class="alert-content">
+              <p class="alert-label" id="alertLabel">需要处理</p>
+              <h2 id="alertTitle">运行失败</h2>
+              <p id="alertMessage"></p>
+              <details id="alertDetailsWrapper">
+                <summary>查看技术详情</summary>
+                <pre id="alertDetails"></pre>
+              </details>
+            </div>
+            <button class="button button-alert" id="alertActionButton" type="button">重新检查</button>
+          </section>
+
+          <section class="startup-progress surface" aria-labelledby="startupProgressTitle">
+            <div class="section-heading compact-heading">
+              <div>
+                <p class="section-kicker">启动流程</p>
+                <h2 id="startupProgressTitle">三步状态</h2>
+              </div>
+              <span class="progress-summary" id="progressSummary">等待启动</span>
+            </div>
+
+            <ol class="stepper" id="startupStepper">
+              <li data-step="preflight">
+                <span class="step-marker"><span>1</span></span>
+                <span class="step-copy"><strong>环境检查</strong></span>
+              </li>
+              <li data-step="capture">
+                <span class="step-marker"><span>2</span></span>
+                <span class="step-copy"><strong>连接动捕</strong></span>
+              </li>
+              <li data-step="simulation">
+                <span class="step-marker"><span>3</span></span>
+                <span class="step-copy"><strong>策略运行</strong></span>
+              </li>
+            </ol>
+
+            <div class="operator-prompt" id="operatorPrompt" hidden>
+              <span class="pulse-ring" aria-hidden="true"></span>
+              <span>
+                <strong>请保持自然站立</strong>
+                <small>收到有效骨骼后，将以当前姿态建立机器人原点。</small>
+              </span>
+            </div>
+
+            <div class="preflight-results" id="preflightResults" hidden></div>
+          </section>
+
+          <section class="status-grid" aria-label="实时指标">
+            <article class="status-card surface" data-card="capture">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <span class="card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 18.5h14M7.5 15V9.8a4.5 4.5 0 0 1 9 0V15M12 5.3V2.8M5.7 7.3 3.8 5.8m14.5 1.5 1.9-1.5M9 18.5v2.7m6-2.7v2.7" /></svg>
+                  </span>
+                  <div><span class="card-overline">INPUT</span><h3>动捕输入</h3></div>
+                </div>
+                <span class="health-badge" id="captureHealth" data-tone="neutral">未连接</span>
+              </header>
+              <div class="primary-metric">
+                <span class="metric-value" id="sourceFps">—</span>
+                <span class="metric-unit">FPS</span>
+                <span class="metric-caption">源数据频率</span>
+              </div>
+              <dl class="metric-list">
+                <div><dt>Skeleton</dt><dd id="metricSkeletonId">0</dd></div>
+                <div><dt>Frame ID</dt><dd id="frameId">—</dd></div>
+                <div><dt>最后数据</dt><dd id="captureFreshness">—</dd></div>
+              </dl>
+            </article>
+
+            <article class="status-card surface" data-card="gmr">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <span class="card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 7.5h9m-4-4 4 4-4 4m9 9H10m4-4-4 4 4 4M5 7.5v13h5m9 0v-13h-5" /></svg>
+                  </span>
+                  <div><span class="card-overline">MOTION MAPPING</span><h3>动作转换</h3></div>
+                </div>
+                <span class="health-badge" id="gmrHealth" data-tone="neutral">未启动</span>
+              </header>
+              <div class="primary-metric">
+                <span class="metric-value" id="bridgeFps">—</span>
+                <span class="metric-unit">Hz</span>
+                <span class="metric-caption">Bridge 实测频率</span>
+              </div>
+              <dl class="metric-list">
+                <div><dt>Root Z</dt><dd id="rootZ">—</dd></div>
+                <div><dt>Rejected</dt><dd id="rejectedFrames">0</dd></div>
+                <div><dt>初始原点</dt><dd id="anchorState">未建立</dd></div>
+              </dl>
+            </article>
+
+            <article class="status-card surface" data-card="backend" hidden aria-hidden="true">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <span class="card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M8 4.5h8v4H8zM5 11h14v8.5H5zM8.5 14.2v2.1m3.5-2.1v2.1m3.5-2.1v2.1M12 8.5V11" /></svg>
+                  </span>
+                  <div><span class="card-overline">MOTION ENGINE</span><h3>动作引擎</h3></div>
+                </div>
+                <span class="health-badge" id="backendHealth" data-tone="neutral">未加载</span>
+              </header>
+              <div class="primary-metric primary-metric-text">
+                <span class="metric-value" id="backendName">实时生成式遥操作</span>
+                <span class="metric-caption" id="backendDescription">动作控制</span>
+              </div>
+              <dl class="metric-list">
+                <div><dt>策略频率</dt><dd id="policyFps">目标 50 Hz</dd></div>
+                <div><dt>计算设备</dt><dd id="policyDevice">AUTO</dd></div>
+                <div><dt>模型状态</dt><dd id="modelState">待加载</dd></div>
+              </dl>
+            </article>
+
+            <article class="status-card surface" data-card="simulation">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <span class="card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 5h16v12H4zM9 21h6m-3-4v4M8 10.8l2.5 2.3L16 8.5" /></svg>
+                  </span>
+                  <div><span class="card-overline">OUTPUT</span><h3>输出状态</h3></div>
+                </div>
+                <span class="health-badge" id="simulationHealth" data-tone="neutral">未运行</span>
+              </header>
+              <div class="primary-metric">
+                <span class="metric-value" id="packetAge">—</span>
+                <span class="metric-unit">ms</span>
+                <span class="metric-caption">输入数据延迟</span>
+              </div>
+              <dl class="metric-list">
+                <div><dt>仿真窗口</dt><dd id="viewerState">未打开</dd></div>
+                <div><dt>运行时间</dt><dd id="simulationDuration">00:00:00</dd></div>
+                <div><dt>安全边界</dt><dd class="simulation-only">仅仿真</dd></div>
+              </dl>
+            </article>
+
+            <article class="status-card safety-status-card surface" id="safetyStatusCard" data-card="safety" data-tone="neutral" hidden aria-hidden="true">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <span class="card-icon safety-card-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 3 4 6.7v5.6c0 4.5 3.4 7.5 8 8.8 4.6-1.3 8-4.3 8-8.8V6.7L12 3Z" /><path d="M8.7 12.2 11 14.5l4.6-5" /></svg>
+                  </span>
+                  <div><span class="card-overline">SAFETY GATEWAY</span><h3>安全策略状态</h3></div>
+                </div>
+                <span class="health-badge" id="safetyHealth" data-tone="neutral">未接入</span>
+              </header>
+
+              <div class="safety-state-row">
+                <div>
+                  <span class="safety-state-label">Gateway state</span>
+                  <strong class="safety-state-value" id="safetyGatewayState">NOT_CONNECTED</strong>
+                </div>
+                <div class="safety-locks" aria-label="锁存状态">
+                  <span class="safety-latch" id="safetyEstopLatch" data-latched="false">E-STOP 未锁存</span>
+                  <span class="safety-latch" id="safetyFaultLatch" data-latched="false">FAULT 未锁存</span>
+                </div>
+              </div>
+
+              <p class="safety-reason" id="safetyReason">后端尚未提供 safety 状态。</p>
+
+              <div class="teleop-weight-block">
+                <div class="teleop-weight-heading">
+                  <span>遥操作权重</span>
+                  <strong id="safetyTeleopWeight">—</strong>
+                </div>
+                <div
+                  class="teleop-weight-track"
+                  id="safetyTeleopProgress"
+                  role="progressbar"
+                  aria-label="遥操作权重"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                ><span></span></div>
+              </div>
+
+              <dl class="metric-list safety-metric-list">
+                <div><dt>Reference</dt><dd id="safetyReferenceHealth">未接入</dd></div>
+                <div><dt>Reference age</dt><dd id="safetyReferenceAge">—</dd></div>
+                <div><dt>策略模式</dt><dd id="safetyStrategyState">—</dd></div>
+                <div><dt>Hard guards</dt><dd id="safetyHardGuards">—</dd></div>
+                <div><dt>Limited</dt><dd id="safetyLimited">—</dd></div>
+              </dl>
+            </article>
+          </section>
+
+          <section class="logs-panel surface" aria-labelledby="logsTitle">
+            <details id="logsDetails">
+              <summary>
+                <span class="logs-title-wrap">
+                  <span class="log-status-dot" id="logStatusDot" data-tone="ok" aria-hidden="true"></span>
+                  <span>
+                    <span class="section-kicker">运行记录</span>
+                    <strong id="logsTitle">实时日志</strong>
+                  </span>
+                  <span class="log-count" id="logCount">0</span>
+                </span>
+                <span class="logs-summary-right">
+                  <span id="logSummary">暂无消息</span>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>
+                </span>
+              </summary>
+
+              <div class="logs-toolbar">
+                <label class="filter-control">
+                  <span>来源</span>
+                  <select id="logSourceFilter">
+                    <option value="all">全部</option>
+                    <option value="system">系统</option>
+                    <option value="chingmu">动捕</option>
+                    <option value="gmr">动作转换</option>
+                    <option value="backend">动作引擎</option>
+                    <option value="mujoco">输出</option>
+                  </select>
+                </label>
+                <label class="filter-control">
+                  <span>级别</span>
+                  <select id="logLevelFilter">
+                    <option value="all">全部</option>
+                    <option value="info">信息</option>
+                    <option value="warning">警告</option>
+                    <option value="error">错误</option>
+                  </select>
+                </label>
+                <label class="toggle-control">
+                  <input type="checkbox" id="autoScrollToggle" checked />
+                  <span class="toggle-track" aria-hidden="true"><span></span></span>
+                  <span>自动滚动</span>
+                </label>
+                <div class="toolbar-spacer"></div>
+                <button class="icon-text-button" id="pauseLogsButton" type="button">暂停显示</button>
+                <button class="icon-text-button" id="clearLogsButton" type="button">清空显示</button>
+                <button class="icon-text-button" id="copyLogsButton" type="button">复制</button>
+                <a class="icon-text-button" id="downloadLogsButton" href="/api/logs/download" download>下载日志</a>
+              </div>
+
+              <div class="log-console" id="logConsole" tabindex="0" aria-label="运行日志内容">
+                <div class="empty-logs" id="emptyLogs">启动流程后，运行消息将在这里显示。</div>
+                <div class="log-lines" id="logLines"></div>
+              </div>
+            </details>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <footer class="action-dock" aria-label="控制流程操作">
+      <div class="dock-safety">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6.7v5.6c0 4.5 3.4 7.5 8 8.8 4.6-1.3 8-4.3 8-8.8V6.7L12 3Z" /><path d="M8.7 12.2 11 14.5l4.6-5" /></svg>
+        <span><strong id="dockSafetyTitle">安全提醒</strong><small id="dockSafetyText">网页“停止控制”不是急停；真机请使用实体遥控器与物理急停</small></span>
+      </div>
+      <div class="dock-actions" id="dockActions">
+        <button class="button button-emergency button-large" id="emergencyStopButton" type="button" disabled hidden aria-pressed="false" title="仅在流程活动时可用；不会停止进程">
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">急停（锁存）</span>
+        </button>
+        <button class="button button-danger-outline" id="safetyResetButton" type="button" hidden>
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">复位安全锁</span>
+        </button>
+        <button class="button button-secondary" id="exitConsoleButton" type="button" title="退出本地网页控制服务">
+          退出控制台
+        </button>
+        <button class="button button-secondary" id="cleanupButton" type="button">清理残留</button>
+        <button class="button button-secondary" id="preflightButton" type="button">环境检查</button>
+        <button class="button button-primary-soft" id="simulationStartButton" type="button" disabled hidden title="仅发送给仿真，不会调用机器人固件">
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">准备站立</span>
+        </button>
+        <button class="button button-primary-soft" id="simulationLiveButton" type="button" disabled hidden title="仅发送给仿真，不会调用机器人固件">
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">接入动捕</span>
+        </button>
+        <button class="button button-primary-soft" id="simulationStandButton" type="button" disabled hidden title="仅发送给仿真，不会调用机器人固件">
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">返回待机</span>
+        </button>
+        <button class="button button-primary button-large" id="startButton" type="button">
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">启动仿真</span>
+        </button>
+        <button class="button button-danger button-large" id="stopButton" type="button" hidden>
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">停止仿真</span>
+        </button>
+        <button class="button button-danger-outline" id="forceStopButton" type="button" hidden>强制停止</button>
+      </div>
+    </footer>
+
+    <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle">
+      <form method="dialog">
+        <span class="dialog-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 8v5m0 3.5v.1M10.4 4.8 2.8 18a1.5 1.5 0 0 0 1.3 2.2h15.8a1.5 1.5 0 0 0 1.3-2.2L13.6 4.8a1.8 1.8 0 0 0-3.2 0Z" /></svg>
+        </span>
+        <h2 id="confirmTitle">确认操作</h2>
+        <p id="confirmMessage"></p>
+        <div class="dialog-actions">
+          <button class="button button-secondary" value="cancel">取消</button>
+          <button class="button button-danger" id="confirmActionButton" value="confirm">确认</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+    <div class="sr-only" id="liveStatus" aria-live="polite"></div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

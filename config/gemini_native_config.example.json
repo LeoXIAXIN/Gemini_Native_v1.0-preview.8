@@ -1,0 +1,15 @@
+{
+  "backend": "humanoid_gpt",
+  "debug_mode": true,
+  "device": "cpu",
+  "execution_mode": "simulation_only",
+  "human_height": 1.75,
+  "model_profile": "unitree_g1_5010",
+  "publish_fps": 50.0,
+  "safety_strategy_enabled": false,
+  "server_ip": "127.0.0.1",
+  "skeleton_id": 0,
+  "transition_seconds": 1.5,
+  "unitree_network_interface": "192.168.123.100",
+  "unitree_robot_ip": "192.168.123.164"
+}
